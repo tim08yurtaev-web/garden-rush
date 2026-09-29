@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Garden Rush</title>
+<meta name="description" content="Garden Rush — весёлая игра «три в ряд» про сад" id="page-description">
+<link rel="preload" as="image" href="assets/backgrounds/loading-bg.png" fetchpriority="high">
+<style>
+  body.is-loading { margin: 0; background: #46b9eb; }
+  body.is-loading #app { visibility: hidden; }
+  body.is-loading .modal-overlay { display: none; }
+  #loading-screen { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #46b9eb; font-family: 'Baloo 2', system-ui, sans-serif; color: #fff; }
+  .loading-landscape { position: absolute; inset: 0; background: url('assets/backgrounds/loading-bg.png') center / cover no-repeat; }
+  .loading-content { position: relative; width: min(78vw, 350px); text-align: center; margin-top: -12vh; }
+  .loading-title { margin: 0 0 32px; font-size: clamp(42px, 10vw, 64px); line-height: .95; font-weight: 900; letter-spacing: 2px; color: #fff1a0; text-shadow: 0 4px 0 #3e752c, 0 7px 12px #23551b55; }
+  .loading-title span { display: block; color: #fff; }
+  .loading-panel { padding: 20px; border: 2px solid #fff8d8; border-radius: 22px; background: #fff8eaf2; color: #3a5430; box-shadow: 0 6px 20px #25663b30; }
+  #loading-status { margin: 0 0 13px; min-height: 2.6em; font-size: 16px; line-height: 1.3; }
+  #loading-progress { height: 17px; overflow: hidden; background: #d9e4bf; border: 2px solid #fff; border-radius: 20px; }
+  #loading-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #63b746, #bbde5b); transition: width 180ms ease; }
+  #loading-percent { display: block; margin-top: 7px; font-size: 14px; font-weight: 800; }
+  #loading-retry { margin-top: 12px; border: 0; border-radius: 12px; padding: 12px 24px; background: #548e36; color: #fff; font: 700 16px system-ui; cursor: pointer; }
+  #loading-retry[hidden] { display: none; }
+  @media (min-aspect-ratio: 3/4) { .loading-landscape { background-size: auto 100%; background-color: #46b9eb; } }
+  @media (prefers-reduced-motion: reduce) { #loading-fill { transition: none; } }
+</style>
+<link rel="preload" href="assets/fonts/baloo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="is-loading">
+
+<div id="loading-screen" role="region" aria-label="Garden Rush">
+  <div class="loading-landscape" aria-hidden="true"></div>
+  <div class="loading-content">
+    <h1 class="loading-title">GARDEN<span>RUSH</span></h1>
+    <div class="loading-panel">
+      <p id="loading-status" role="status" aria-live="polite">Загружаем сад…</p>
+      <div id="loading-progress" role="progressbar" aria-label="Загрузка / Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="loading-fill"></div></div>
+      <span id="loading-percent" aria-hidden="true">0%</span>
+      <button id="loading-retry" type="button" hidden>Повторить</button>
+      <noscript>Для игры нужно включить JavaScript.</noscript>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- ===================== ГЛАВНОЕ МЕНЮ ===================== -->
+  <section id="screen-menu" class="screen active">
+    <button class="icon-btn language-btn menu-language-btn" id="btn-language-menu" aria-label="Сменить язык на английский" title="Сменить язык на английский">EN</button>
+    <button class="icon-btn sound-btn" id="btn-sound-menu" aria-label="Звук" title="Звук" data-i18n-aria="sound" data-i18n-title="sound">🔊</button>
+
+    <div class="menu-content">
+      <h1 class="game-title">
+        <span class="title-line title-garden">GARDEN</span>
+        <span class="title-line title-rush">RUSH</span>
+      </h1>
+      <p class="menu-subtitle" data-i18n="menuSubtitle">Собери урожай в три ряда!</p>
+
+      <button id="btn-play" class="btn btn-primary btn-play">
+        <span class="btn-play-icon">🌱</span>
+        <span data-i18n="play">Играть</span>
+      </button>
+
+      <div class="menu-progress" id="menu-progress">Пройдено уровней: 0 / 30</div>
+    </div>
+  </section>
+
+  <!-- ===================== КАРТА УРОВНЕЙ ===================== -->
+  <section id="screen-map" class="screen">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-map-home" aria-label="В меню" title="В меню" data-i18n-aria="mapHome" data-i18n-title="mapHome">🏠</button>
+      <h2 class="topbar-title" data-i18n="mapTitle">Карта сада</h2>
+      <div class="topbar-actions">
+        <button class="icon-btn language-btn" id="btn-language-map" aria-label="Сменить язык на английский" title="Сменить язык на английский">EN</button>
+        <button class="icon-btn" id="btn-sound-map" aria-label="Звук" title="Звук" data-i18n-aria="sound" data-i18n-title="sound">🔊</button>
+      </div>
+    </header>
+    <nav class="map-page-switch" aria-label="Переключение участка карты" data-i18n-aria="mapPages">
+      <button class="map-page-arrow" id="btn-map-prev" aria-label="Предыдущий участок" title="Предыдущий участок" data-i18n-aria="previousArea" data-i18n-title="previousArea">←</button>
+      <span class="map-page-label" id="map-page-label">Участок 1 из 3</span>
+      <button class="map-page-arrow" id="btn-map-next" aria-label="Следующий участок" title="Следующий участок" data-i18n-aria="nextArea" data-i18n-title="nextArea">→</button>
+    </nav>
+    <div class="map-viewport" id="map-viewport">
+      <div class="map-path" id="map-path"><!-- уровни рендерятся через JS --></div>
+    </div>
+  </section>
+
+  <!-- ===================== ИГРОВОЙ ЭКРАН ===================== -->
+  <section id="screen-game" class="screen">
+    <header class="hud">
+      <div class="hud-row hud-row-top">
+        <button class="icon-btn small" id="btn-game-back" aria-label="Назад" title="Назад" data-i18n-aria="back" data-i18n-title="back">←</button>
+        <div class="hud-level-title" id="hud-level-title">УРОВЕНЬ 1</div>
+        <div class="hud-actions">
+          <button class="icon-btn small language-btn" id="btn-language-game" aria-label="Сменить язык на английский" title="Сменить язык на английский">EN</button>
+          <button class="icon-btn small" id="btn-sound-game" aria-label="Звук" title="Звук" data-i18n-aria="sound" data-i18n-title="sound">🔊</button>
+        </div>
+      </div>
+      <div class="hud-row hud-goals" id="hud-goals"><!-- цели рендерятся через JS --></div>
+      <div class="hud-row hud-scorebar-row">
+        <div class="score-bar" id="score-bar">
+          <div class="score-bar-track">
+            <div class="score-bar-fill" id="score-bar-fill"></div>
+          </div>
+          <div class="score-bar-star" id="score-bar-star-0">⭐</div>
+          <div class="score-bar-star" id="score-bar-star-1">⭐</div>
+          <div class="score-bar-star" id="score-bar-star-2">⭐</div>
+        </div>
+      </div>
+      <p class="hud-star-rules" id="hud-star-rules"></p>
+      <div class="hud-row hud-stats">
+        <div class="hud-stat">
+          <span class="hud-stat-label" data-i18n="moves">Ходы</span>
+          <span class="hud-stat-value" id="hud-moves">20</span>
+        </div>
+        <div class="hud-stat">
+          <span class="hud-stat-label" data-i18n="score">Очки</span>
+          <span class="hud-stat-value" id="hud-score">0</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="tutorial-hint hidden" id="tutorial-hint" role="status" aria-live="polite"></div>
+
+    <div class="board-wrap">
+      <div class="board-grid" id="board-grid"></div>
+    </div>
+
+    <button class="victory-finale hidden" id="victory-finale" type="button">
+      <span class="finale-card">
+        <strong data-i18n="finaleTitle">Урожай собран!</strong>
+        <span id="finale-detail" role="status"></span>
+        <small data-i18n="finaleSkip">Нажми, чтобы перейти к результату</small>
+      </span>
+    </button>
+
+    <div class="toast" id="toast"></div>
+  </section>
+
+</div>
+
+<!-- ===================== МОДАЛЬНЫЕ ОКНА ===================== -->
+<div class="modal-overlay hidden" id="modal-win">
+  <div class="modal-card">
+    <div class="modal-emoji">🏆</div>
+    <h3 class="modal-title" data-i18n="winTitle">Уровень пройден!</h3>
+    <div class="win-record-badge" id="win-record-badge" aria-live="polite"></div>
+    <div class="stars-row" id="win-stars"><!-- звёзды рендерятся через JS --></div>
+    <p class="star-hint" id="win-star-hint"></p>
+    <div class="win-breakdown">
+      <div><span data-i18n="baseScore">За игру</span><b id="win-base-score">0</b></div>
+      <div><span data-i18n="specialBonus">Финальные усилители</span><b id="win-special-bonus">+0</b></div>
+      <div><span id="win-move-bonus-label">Бонус за ходы</span><b id="win-move-bonus">+0</b></div>
+    </div>
+    <div class="modal-stats">
+      <div class="modal-stat"><span data-i18n="points">Очки</span><b id="win-score">0</b></div>
+      <div class="modal-stat"><span data-i18n="movesLeft">Осталось ходов</span><b id="win-moves">0</b></div>
+    </div>
+    <p class="win-best-record" id="win-best-record"></p>
+    <button class="btn btn-primary" id="btn-win-next" data-i18n="next">Далее</button>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-lose">
+  <div class="modal-card">
+    <div class="modal-emoji">🥀</div>
+    <h3 class="modal-title" data-i18n="loseTitle">Попробуй ещё!</h3>
+    <p class="modal-text" data-i18n="loseRemaining">До победы осталось:</p>
+    <div class="lose-goals" id="lose-goals"></div>
+    <div class="modal-btn-row">
+      <button class="btn btn-secondary" id="btn-lose-map" data-i18n="map">На карту</button>
+      <button class="btn btn-primary" id="btn-lose-retry" data-i18n="retry">Повторить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-level-info">
+  <div class="level-card">
+    <div class="level-ribbon"><span id="level-info-title">УРОВЕНЬ 1</span></div>
+    <button class="level-card-close" id="btn-level-info-close" aria-label="Закрыть" data-i18n-aria="close">✕</button>
+
+    <div class="level-card-body">
+      <div class="stars-row" id="level-info-stars"><!-- звёзды рендерятся через JS --></div>
+      <p class="star-hint" id="level-info-star-hint"></p>
+
+      <div class="level-section-label" data-i18n="goals">Цели</div>
+      <div class="level-goals-box" id="level-info-goals"><!-- цели рендерятся через JS --></div>
+
+      <button class="btn btn-primary btn-play-level" id="btn-level-info-play" data-i18n="playLevel">Играть</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gem Space Bridge SDK -->
+<div class="modal-overlay hidden" id="modal-endless-info" role="dialog" aria-modal="true" aria-labelledby="endless-title" aria-describedby="endless-description">
+  <div class="modal-card">
+    <div class="endless-emblem" aria-hidden="true">∞</div>
+    <h3 class="modal-title" id="endless-title" data-i18n="endlessTitle">Бесконечный сад</h3>
+    <p class="modal-text" id="endless-description"></p>
+    <p class="star-hint" data-i18n="endlessSaveHint">Прогресс сохраняется после каждого хода. Можно выйти на карту и продолжить позже.</p>
+    <p class="star-hint" id="endless-record"></p>
+    <p class="star-hint" id="endless-saved"></p>
+    <div class="endless-actions">
+      <button class="btn btn-primary" id="btn-endless-play" type="button"></button>
+      <button class="btn btn-secondary" id="btn-endless-close" data-i18n="close">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-endless-result" role="dialog" aria-modal="true" aria-labelledby="endless-result-title">
+  <div class="modal-card">
+    <div class="endless-emblem" aria-hidden="true">∞</div>
+    <h3 class="modal-title" id="endless-result-title" data-i18n="endlessEnd">Забег завершён!</h3>
+    <div class="modal-stats">
+      <div class="modal-stat"><span data-i18n="endlessCompleted">Заданий выполнено</span><b id="endless-result-stages">0</b></div>
+      <div class="modal-stat"><span data-i18n="points">Очки</span><b id="endless-result-score">0</b></div>
+    </div>
+    <p class="star-hint" id="endless-result-record"></p>
+    <div class="endless-actions">
+      <button class="btn btn-primary" id="btn-endless-retry" data-i18n="endlessRetry">Новый забег</button>
+      <button class="btn btn-secondary" id="btn-endless-map" data-i18n="map">На карту</button>
+    </div>
+  </div>
+</div>
+
+<script async src="https://cdn.jsdelivr.net/npm/@gemspace/gem-bridge-sdk/index.global.js" onload="if(window.initGemSpaceBridge) window.initGemSpaceBridge()"></script>
+<script src="loader.js"></script>
+<script src="game.js" onerror="window.GardenLoader.showBootError()"></script>
+</body>
+</html>
