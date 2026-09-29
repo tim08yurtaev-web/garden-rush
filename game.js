@@ -3432,11 +3432,7 @@ const STARTUP_IMAGES = [
 ];
 
 function startupImages() {
-  const images = [...STARTUP_IMAGES, MAP_PAGE_BACKGROUNDS[normalizeMapPage(currentMapPage)]];
-  if (window.matchMedia('(min-width: 760px) and (min-height: 560px)').matches) {
-    images.push('assets/backgrounds/garden-desktop.png');
-  }
-  return images;
+  return [...STARTUP_IMAGES, MAP_PAGE_BACKGROUNDS[normalizeMapPage(currentMapPage)]];
 }
 
 async function init() {

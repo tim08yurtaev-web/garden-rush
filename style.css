@@ -1631,29 +1631,7 @@ button {
 }
 
 
-/* На широких экранах заполняем боковые поля иллюстрацией сада,
-   сохраняя привычную компактную ширину игрового интерфейса. */
-@media (min-width: 760px) and (min-height: 560px) {
-  html, body { background: #315d3b; }
-  body {
-    background-color: #4e9149;
-    background-image:
-      linear-gradient(90deg, rgba(28, 62, 34, .34), transparent 23%, transparent 77%, rgba(28, 62, 34, .34)),
-      url('assets/backgrounds/garden-desktop.png');
-    background-position: center, center;
-    background-size: cover, cover;
-    background-attachment: fixed, fixed;
-  }
-  #app {
-    border-left: 1px solid rgba(255, 249, 224, .42);
-    border-right: 1px solid rgba(255, 249, 224, .42);
-    box-shadow: 0 0 0 1px rgba(39, 68, 39, .48), 0 0 54px rgba(24, 38, 24, .5);
-  }
-}
-
-
 /* Карта сада: размытый фон из выбранной иллюстрации. */
-/* Размытый садовый фон карты использует тот же готовый desktop-арт. */
 #screen-map {
   position: relative;
   isolation: isolate;
