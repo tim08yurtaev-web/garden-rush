@@ -1220,6 +1220,31 @@ button {
   margin-bottom: 6px;
 }
 
+.welcome-card { width: min(90vw, 440px); }
+.welcome-harvest { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+.welcome-harvest img { width: 52px; height: 52px; object-fit: contain; }
+.welcome-harvest img:nth-child(2) { transform: translateY(-5px); }
+.welcome-rules { margin: 18px 0 22px; padding-left: 26px; text-align: left; }
+.welcome-rules li { padding-left: 6px; margin-bottom: 12px; line-height: 1.45; }
+.welcome-rules li::marker { color: #548132; font-weight: 800; }
+.welcome-rules p { margin: 0; }
+.welcome-rules .welcome-controls { margin-top: 6px; font-size: 0.9em; color: #70634e; }
+.welcome-card > .btn { width: 100%; }
+.game-help {
+  align-self: center;
+  margin: 4px auto 8px;
+  padding: 6px 16px;
+  border: 1px solid #b6c88e;
+  border-radius: 20px;
+  background: var(--cream);
+  color: #426326;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.game-help:hover { background: #edf4dc; }
+
 /* Ряд из 3 звёзд ОДИНАКОВОГО размера. Полученная звезда — в золотом
    "медальоне"; неполученная — пустая тёмная рамка того же размера. */
 .stars-row {

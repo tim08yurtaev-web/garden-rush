@@ -27,6 +27,14 @@
 const LANGUAGE_STORAGE_KEY = 'gardenRushLanguage_v1';
 const TEXT = {
   ru: {
+    welcomeTitle: 'Добро пожаловать в сад!',
+    welcomeIntro: 'Давай соберём первый урожай вместе.',
+    welcomeMatch: 'Меняй местами соседние фишки: собери 3 или больше одинаковых в ряд по горизонтали или вертикали.',
+    welcomeControls: 'Перетащи фишку к соседней или нажми на обе по очереди.',
+    welcomeGoal: 'Твоя первая цель — собрать {amount} яблок за {moves} ходов. Цель и оставшиеся ходы показаны над полем.',
+    welcomeBonus: 'Собирай 4 и больше фишек, чтобы создавать усилители. Они помогут собрать урожай!',
+    welcomeStart: 'Начнём!',
+    howToPlay: 'Как играть',
     endlessTitle: 'Бесконечный сад',
     endlessRules: 'Начни с 20 ходов. За каждое задание получай +6 ходов. В запасе максимум 30 ходов. Поле и усилители сохраняются, задания постепенно усложняются.',
     endlessLocked: 'Пройди уровень 30, чтобы открыть бесконечный сад.',
@@ -80,6 +88,14 @@ const TEXT = {
     obstacleRoots: ', оплетён корнями: ещё {hits} удара', obstacleIce: ', заморожен',
   },
   en: {
+    welcomeTitle: 'Welcome to the garden!',
+    welcomeIntro: 'Let’s gather your first harvest together.',
+    welcomeMatch: 'Swap neighboring tiles to match 3 or more of the same kind in a horizontal or vertical row.',
+    welcomeControls: 'Drag a tile toward its neighbor, or tap the two tiles one after another.',
+    welcomeGoal: 'Your first goal: collect {amount} apples in {moves} moves. Your goal and remaining moves are shown above the board.',
+    welcomeBonus: 'Match 4 or more tiles to create power-ups. They will help you gather your harvest!',
+    welcomeStart: 'Let’s go!',
+    howToPlay: 'How to play',
     endlessTitle: 'Endless Garden',
     endlessRules: 'Start with 20 moves. Every task awards +6 moves. Keep up to 30 moves in reserve. Your board and power-ups stay as tasks get harder.',
     endlessLocked: 'Complete level 30 to unlock Endless Garden.',
@@ -787,7 +803,7 @@ const STORAGE_KEY = 'gardenRushSave_v1';
 
 function defaultProgress() {
   return { unlockedLevel: 1, bestScore: {}, bestStars: {}, bestMoves: {}, soundOn: true,
-    endlessRun: null, endlessBestScore: 0, endlessBestStages: 0, lastMapPage: 0 };
+    endlessRun: null, endlessBestScore: 0, endlessBestStages: 0, lastMapPage: 0, welcomeSeen: false };
 }
 
 function loadProgress() {
@@ -3012,6 +3028,7 @@ const Board = {
   /* ---------- HUD ---------- */
 
   renderHud() {
+    $('btn-game-help').classList.toggle('hidden', this.level.id !== 1);
     $('hud-level-title').textContent = this.level.mode === 'endless'
       ? t('endlessStage', { stage: this.level.stage }) : levelTitle(this.level.id).toUpperCase();
     $('hud-moves').textContent = this.victoryDisplayMoves ?? this.moves;
@@ -3255,6 +3272,35 @@ const Board = {
    9. ИНИЦИАЛИЗАЦИЯ
    ============================================================= */
 
+function showFirstLevelWelcome(force = false) {
+  if (!Board.level || Board.level.id !== 1 || Board.busy || Board.outcome) return;
+  if (!force && (progress.welcomeSeen || progress.unlockedLevel > 1)) return;
+  $('welcome-goal').textContent = t('welcomeGoal', {
+    amount: Board.level.goals.find(goal => goal.type === 'collect' && goal.gem === 'apple').amount,
+    moves: Board.level.moves,
+  });
+  Board.stopIdleHint();
+  Board.pointer = null;
+  Board.clearSelection();
+  Board.clearPressed();
+  Board.busy = true;
+  $('screen-game').inert = true;
+  $('modal-welcome').classList.remove('hidden');
+  $('btn-welcome-start').focus();
+}
+
+function closeFirstLevelWelcome() {
+  if ($('modal-welcome').classList.contains('hidden')) return;
+  progress.welcomeSeen = true;
+  saveProgress(progress);
+  $('modal-welcome').classList.add('hidden');
+  $('screen-game').inert = false;
+  Board.busy = false;
+  Board.scheduleIdleHint();
+  const firstTile = Board.gridEl.querySelector('.gem');
+  if (firstTile) firstTile.focus();
+}
+
 function startLevel(levelId) {
   const level = LEVELS.find((l) => l.id === levelId);
   if (!level) return;
@@ -3264,6 +3310,7 @@ function startLevel(levelId) {
   $('modal-lose').classList.add('hidden');
   $('modal-level-info').classList.add('hidden');
   Board.start(level);
+  showFirstLevelWelcome();
 }
 
 function goToMap() {
@@ -3273,6 +3320,18 @@ function goToMap() {
 }
 
 function bindGlobalUI() {
+  $('btn-game-help').addEventListener('click', () => {
+    if (Board.busy) { showToast(t('waitMove')); return; }
+    showFirstLevelWelcome(true);
+  });
+  $('btn-welcome-start').addEventListener('click', closeFirstLevelWelcome);
+  $('modal-welcome').addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeFirstLevelWelcome();
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      $('btn-welcome-start').focus();
+    }
+  });
   $('btn-endless-close').addEventListener('click', closeEndlessInfo);
   $('modal-endless-info').addEventListener('click', (event) => {
     if (event.target === event.currentTarget) closeEndlessInfo();
