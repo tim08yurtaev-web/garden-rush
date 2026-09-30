@@ -464,6 +464,7 @@ button {
 
 #screen-game > * { position: relative; z-index: 1; }
 #screen-game > .game-help { position: absolute; }
+#screen-game > .victory-finale { position: absolute; }
 
 .hud {
   flex-shrink: 0;
