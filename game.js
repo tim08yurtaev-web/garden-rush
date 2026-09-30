@@ -947,6 +947,12 @@ function $(id) { return document.getElementById(id); }
 function randomInt(max) { return Math.floor(Math.random() * max); }
 function randomGem() { return GEM_IDS[randomInt(GEM_IDS.length)]; }
 function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+// Keep movement and clearing in sync with the CSS durations below.
+const MOVE_MS = 150;
+const CLEAR_MS = 160;
+const FALL_MS = 190;
+const SPECIAL_IMPACT_MS = 180;
+const BUTTERFLY_FLIGHT_MS = 240;
 
 function updateLanguageButtons() {
   const label = currentLanguage === 'ru' ? 'EN' : 'RU';
@@ -1479,8 +1485,14 @@ const Board = {
     this.busy = false;
     this.tutorialMove = null;
     this.tutorialArrowEl = null;
+    $('tutorial-hint').classList.add('hidden');
 
     this.gridEl = $('board-grid');
+    this.gridEl.style.setProperty('--move-duration', MOVE_MS + 'ms');
+    this.gridEl.style.setProperty('--clear-duration', CLEAR_MS + 'ms');
+    this.gridEl.style.setProperty('--fall-duration', FALL_MS + 'ms');
+    this.gridEl.style.setProperty('--flight-duration', BUTTERFLY_FLIGHT_MS + 'ms');
+    this.gridEl.classList.remove('tutorial-lock');
     this.gridEl.innerHTML = '';
 
     this.parseShape(level.shape);
@@ -1502,8 +1514,8 @@ const Board = {
       this.cagesFreed = snapshot.cagesFreed;
       this.iceCleared = snapshot.iceCleared;
     }
-    this.measure();
     this.renderHud();
+    this.measure();
 
     if (level.introKey) showToast(t(level.introKey), 3400);
 
@@ -1514,6 +1526,9 @@ const Board = {
     if (!this.resizeHandler) {
       this.resizeHandler = () => this.onResize();
       window.addEventListener('resize', this.resizeHandler);
+      // HUD wrapping, tutorial hints and viewport changes all affect usable space.
+      this.resizeObserver = new ResizeObserver(this.resizeHandler);
+      this.resizeObserver.observe(this.gridEl.parentElement);
     }
   },
 
@@ -1552,8 +1567,11 @@ const Board = {
     // так поле максимально заполняет экран на любом устройстве и
     // никогда не обрезается снизу под HUD разной высоты.
     const wrap = this.gridEl.parentElement;
-    const padding = 20; // небольшой отступ от краёв контейнера
-    const available = Math.min(wrap.clientWidth, wrap.clientHeight) - padding;
+    const style = getComputedStyle(wrap);
+    const available = Math.min(
+      wrap.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+      wrap.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
+    );
     const boardSize = Math.max(1, Math.min(available, 560));
     this.gridEl.style.width = boardSize + 'px';
     this.gridEl.style.height = boardSize + 'px';
@@ -1985,6 +2003,18 @@ const Board = {
 
   /* ---------- обмен элементов ---------- */
 
+  async waitForTileMotion(elements, fallbackMs) {
+    // Reading animations flushes pending styles. A timer alone can release input
+    // one frame before the browser has actually finished moving the tiles.
+    if (elements.some(el => typeof el.getAnimations !== 'function')) {
+      await delay(fallbackMs);
+      return;
+    }
+    const animations = elements.flatMap(el => el.getAnimations())
+      .filter(animation => animation.transitionProperty === 'transform');
+    await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+  },
+
   async trySwap(a, b) {
     if (!this.inBounds(b.row, b.col) || !this.inBounds(a.row, a.col)) return;
     if (!this.areAdjacent(a, b)) return;
@@ -2001,7 +2031,7 @@ const Board = {
     Sound.play('swap');
     this.placeTile(cellA.el, b.row, b.col, true);
     this.placeTile(cellB.el, a.row, a.col, true);
-    await delay(220);
+    await this.waitForTileMotion([cellA.el, cellB.el], MOVE_MS);
 
     // Радужный цветок работает как цветовая бомба: обмен задаёт цвет,
     // который нужно убрать. Остальные спецфишки по-прежнему требуют матч.
@@ -2029,7 +2059,7 @@ const Board = {
       this.swapData(a, b);
       this.placeTile(cellA.el, a.row, a.col, true);
       this.placeTile(cellB.el, b.row, b.col, true);
-      await delay(220);
+      await this.waitForTileMotion([cellA.el, cellB.el], MOVE_MS);
       this.busy = false;
       return;
     }
@@ -2144,11 +2174,6 @@ const Board = {
       // Автоматическая цепочка (не первый ход игрока) — показываем баннер
       // "КОМБО ×N" для наглядной обратной связи по каскадам.
       if (cascadeLevel >= 2) this.showComboBanner(cascadeLevel);
-      // Начиная с 3-го звена цепочки — добавляем лёгкую встряску поля,
-      // чтобы по-настоящему мощный каскад ощущался мощным.
-      if (cascadeLevel >= 3) this.shakeBoard();
-
-      this.applyObstacleHits(result);
       await this.playMatchEffects(result, cascadeLevel);
       this.registerClearedGems(result.countedCells, cascadeLevel);
       this.renderHud();
@@ -2156,7 +2181,6 @@ const Board = {
       await this.collapseAndRefill(result.clearSet, result.specialsToCreate);
 
       cascadeLevel++;
-      await delay(60);
     }
 
     // после того как поле "успокоилось", проверяем, что есть возможный ход
@@ -2386,6 +2410,7 @@ const Board = {
 
   // Баннер "КОМБО ×N" при автоматических цепочках комбинаций (каскадах).
   showComboBanner(level) {
+    this.gridEl.querySelectorAll('.combo-banner').forEach(el => el.remove());
     const banner = document.createElement('div');
     banner.className = 'combo-banner';
     banner.textContent = t('combo') + level;
@@ -2529,18 +2554,26 @@ const Board = {
   async playMatchEffects(result, cascadeLevel) {
     Sound.play('match');
     const specialBonus = result.specialsToCreate.length * 100 + result.firedSpecials.length * 50;
-    if (result.specialsToCreate.some((item) => item.special === 'rocket-row' || item.special === 'rocket-col')) Sound.play('rocketCreate');
     const firedRockets = result.firedSpecials.filter((item) => item.special === 'rocket-row' || item.special === 'rocket-col');
     if (firedRockets.length > 0) {
       Sound.play('rocketUse');
       this.drawBeamsForRockets(firedRockets);
     }
-    if (result.firedSpecials.length > 0) this.drawSpecialEffects(result.firedSpecials);
+    if (result.firedSpecials.length > 0) {
+      // Keep targets visible until the projectile reaches them.
+      result.clearSet.forEach(({ row, col }) => this.grid[row][col].el?.classList.add('effect-target'));
+      this.drawSpecialEffects(result.firedSpecials);
+      const hasFlight = result.firedSpecials.some(item => item.special === 'butterfly' && item.target);
+      await delay(hasFlight ? BUTTERFLY_FLIGHT_MS : SPECIAL_IMPACT_MS);
+      result.clearSet.forEach(({ row, col }) => this.grid[row][col].el?.classList.remove('effect-target'));
+    }
+    this.applyObstacleHits(result);
     const gained = this.addScore(result.countedCells, cascadeLevel, specialBonus);
     const variant = firedRockets.length > 0 ? 'rocket' : undefined;
     this.showScorePopup(result.countedCells, gained, cascadeLevel, variant);
     await this.playClearAnimation(result.clearSet);
     result.specialsToCreate.forEach((info) => this.turnIntoSpecial(info));
+    if (result.specialsToCreate.some((item) => item.special === 'rocket-row' || item.special === 'rocket-col')) Sound.play('rocketCreate');
     if (result.specialsToCreate.length > 0) this.pulseSpecialBirth(result.specialsToCreate);
   },
 
@@ -2617,16 +2650,16 @@ const Board = {
   async playClearAnimation(clearSet) {
     // при очень больших очистках (длинная линия ракеты, крупный каскад)
     // снижаем число искр на клетку, чтобы не перегружать слабые устройства
-    const particlesPerCell = clearSet.size > 16 ? 1 : 3;
+    const particlesPerCell = clearSet.size > 16 ? 1 : 2;
+    if (clearSet.size > 0) Sound.play('destroy');
     clearSet.forEach((pos) => {
       const cell = this.grid[pos.row][pos.col];
       if (cell.el) {
         cell.el.classList.add('matched');
-        Sound.play('destroy');
         this.spawnSparkles(pos.row, pos.col, cell.type, particlesPerCell);
       }
     });
-    await delay(230);
+    await delay(CLEAR_MS);
   },
 
   // Мелкие цветные искры, разлетающиеся из точки уничтоженного элемента —
@@ -2702,7 +2735,7 @@ const Board = {
             this.updateTileVisual(cell);
             cell.el.classList.remove('roots-freed');
           }
-        }, 260);
+        }, CLEAR_MS);
       } else {
         this.updateTileVisual(cell);
         const overlay = cell.el && cell.el.querySelector('.roots-overlay');
@@ -2723,7 +2756,7 @@ const Board = {
           this.updateTileVisual(cell);
           cell.el.classList.remove('ice-freed');
         }
-      }, 260);
+      }, CLEAR_MS);
     });
   },
   registerClearedGems(countedCells, cascadeLevel) {
@@ -2780,13 +2813,17 @@ const Board = {
     if (animate) await new Promise(requestAnimationFrame);
     // Пропуск финала может открыть следующий уровень до следующего кадра.
     if (this.grid !== fillingGrid) return;
+    this.gridEl.classList.toggle('falling', animate);
     for (let row = 0; row < this.size; row++) {
       for (let col = 0; col < this.size; col++) {
         const cell = this.grid[row][col];
         if (cell.el) this.placeTile(cell.el, row, col, animate);
       }
     }
-    if (animate) await delay(300);
+    if (animate) await this.waitForTileMotion(
+      this.grid.flat().filter(cell => cell.el).map(cell => cell.el), FALL_MS
+    );
+    if (this.grid === fillingGrid) this.gridEl.classList.remove('falling');
   },
   async ensurePossibleMove() {
     for (let attempt = 0; attempt < 3; attempt++) {
