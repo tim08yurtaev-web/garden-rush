@@ -281,9 +281,11 @@ button {
    ========================================================= */
 
 .topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 8px;
+  flex: 0 0 auto;
   align-items: center;
-  justify-content: space-between;
   padding: 16px 18px 8px;
   position: relative;
   z-index: 1;
@@ -297,17 +299,16 @@ button {
 }
 
 .topbar-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  min-width: 0;
   margin: 0;
-  font-size: 20px;
+  font-size: clamp(16px, 5vw, 20px);
   font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
   color: var(--text-dark);
   background: rgba(255, 255, 255, 0.75);
-  padding: 6px 18px;
-  white-space: nowrap;
-  max-width: calc(100% - 160px);
+  padding: 6px 10px;
+  overflow-wrap: anywhere;
   border-radius: 999px;
 }
 
