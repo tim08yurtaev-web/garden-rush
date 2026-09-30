@@ -948,11 +948,15 @@ function randomInt(max) { return Math.floor(Math.random() * max); }
 function randomGem() { return GEM_IDS[randomInt(GEM_IDS.length)]; }
 function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 // Keep movement and clearing in sync with the CSS durations below.
-const MOVE_MS = 150;
-const CLEAR_MS = 160;
-const FALL_MS = 190;
-const SPECIAL_IMPACT_MS = 180;
+const MOVE_MS = 260;
+const CLEAR_MS = 300;
+const FALL_MS = 420;
+const SPECIAL_IMPACT_MS = 360;
 const BUTTERFLY_FLIGHT_MS = 240;
+const FLIGHT_VISUAL_MS = 560;
+const MATCH_READ_MS = 180;
+const SETTLE_MS = 100;
+const SPECIAL_BIRTH_MS = 340;
 
 function updateLanguageButtons() {
   const label = currentLanguage === 'ru' ? 'EN' : 'RU';
@@ -1491,7 +1495,9 @@ const Board = {
     this.gridEl.style.setProperty('--move-duration', MOVE_MS + 'ms');
     this.gridEl.style.setProperty('--clear-duration', CLEAR_MS + 'ms');
     this.gridEl.style.setProperty('--fall-duration', FALL_MS + 'ms');
-    this.gridEl.style.setProperty('--flight-duration', BUTTERFLY_FLIGHT_MS + 'ms');
+    this.gridEl.style.setProperty('--flight-duration', FLIGHT_VISUAL_MS + 'ms');
+    this.gridEl.style.setProperty('--impact-duration', SPECIAL_IMPACT_MS + 'ms');
+    this.gridEl.style.setProperty('--birth-duration', SPECIAL_BIRTH_MS + 'ms');
     this.gridEl.classList.remove('tutorial-lock');
     this.gridEl.innerHTML = '';
 
@@ -2015,6 +2021,18 @@ const Board = {
     await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
   },
 
+  async waitForEffects(names, fallbackMs) {
+    if (typeof this.gridEl.getAnimations !== 'function') {
+      await delay(fallbackMs);
+      return;
+    }
+    // Wait for the rendered effect, including a delayed first frame on phones.
+    // Decorative loops (for example a rocket's idle pulse) must not block play.
+    const animations = this.gridEl.getAnimations({ subtree: true })
+      .filter(animation => names.includes(animation.animationName));
+    await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+  },
+
   async trySwap(a, b) {
     if (!this.inBounds(b.row, b.col) || !this.inBounds(a.row, a.col)) return;
     if (!this.areAdjacent(a, b)) return;
@@ -2056,6 +2074,7 @@ const Board = {
     if (matches.length === 0 && !forcedAction) {
       // нет комбинации — возвращаем элементы обратно
       Sound.play('invalid');
+      await delay(SETTLE_MS);
       this.swapData(a, b);
       this.placeTile(cellA.el, a.row, a.col, true);
       this.placeTile(cellB.el, b.row, b.col, true);
@@ -2179,6 +2198,7 @@ const Board = {
       this.renderHud();
 
       await this.collapseAndRefill(result.clearSet, result.specialsToCreate);
+      await delay(SETTLE_MS);
 
       cascadeLevel++;
     }
@@ -2543,6 +2563,7 @@ const Board = {
     });
     return {
       clearSet,
+      matchedCells: runs.flatMap(run => run.cells),
       countedCells: countedAfterObstacles,
       specialsToCreate: specialsAfterObstacles,
       firedSpecials,
@@ -2552,6 +2573,13 @@ const Board = {
   },
 
   async playMatchEffects(result, cascadeLevel) {
+    // Show the cause before the consequence: match, impact, clear, then fall.
+    const preview = [...(result.matchedCells || []), ...result.firedSpecials]
+      .filter(({ row, col }) => Number.isInteger(row) && Number.isInteger(col) && this.grid[row]?.[col])
+      .map(({ row, col }) => this.grid[row][col].el).filter(Boolean);
+    preview.forEach(el => el.classList.add('match-preview'));
+    if (preview.length && typeof this.gridEl.getAnimations === 'function') await delay(MATCH_READ_MS);
+    preview.forEach(el => el.classList.remove('match-preview'));
     Sound.play('match');
     const specialBonus = result.specialsToCreate.length * 100 + result.firedSpecials.length * 50;
     const firedRockets = result.firedSpecials.filter((item) => item.special === 'rocket-row' || item.special === 'rocket-col');
@@ -2564,17 +2592,29 @@ const Board = {
       result.clearSet.forEach(({ row, col }) => this.grid[row][col].el?.classList.add('effect-target'));
       this.drawSpecialEffects(result.firedSpecials);
       const hasFlight = result.firedSpecials.some(item => item.special === 'butterfly' && item.target);
-      await delay(hasFlight ? BUTTERFLY_FLIGHT_MS : SPECIAL_IMPACT_MS);
+      await this.waitForEffects(
+        ['butterfly-flight', 'beam-fade', 'beam-fade-vertical', 'pumpkin-burst-pop', 'rainbow-flash-pop'],
+        hasFlight ? BUTTERFLY_FLIGHT_MS : SPECIAL_IMPACT_MS
+      );
       result.clearSet.forEach(({ row, col }) => this.grid[row][col].el?.classList.remove('effect-target'));
     }
     this.applyObstacleHits(result);
+    this.animateGoalItems([
+      ...(result.countedCells || []).map(cell => ({ type: 'collect', gem: cell.type, row: cell.row, col: cell.col })),
+      ...(result.cageHitsToDamage || []).filter(pos => this.grid[pos.row][pos.col].cageHits === 0)
+        .map(pos => ({ type: 'cage', ...pos })),
+      ...(result.iceHitsToDamage || []).map(pos => ({ type: 'ice', ...pos })),
+    ]);
     const gained = this.addScore(result.countedCells, cascadeLevel, specialBonus);
     const variant = firedRockets.length > 0 ? 'rocket' : undefined;
     this.showScorePopup(result.countedCells, gained, cascadeLevel, variant);
     await this.playClearAnimation(result.clearSet);
     result.specialsToCreate.forEach((info) => this.turnIntoSpecial(info));
     if (result.specialsToCreate.some((item) => item.special === 'rocket-row' || item.special === 'rocket-col')) Sound.play('rocketCreate');
-    if (result.specialsToCreate.length > 0) this.pulseSpecialBirth(result.specialsToCreate);
+    if (result.specialsToCreate.length > 0) {
+      this.pulseSpecialBirth(result.specialsToCreate);
+      await this.waitForEffects(['rocket-birth-pulse'], SPECIAL_BIRTH_MS);
+    }
   },
 
   drawSpecialEffects(firedSpecials) {
@@ -2604,7 +2644,7 @@ const Board = {
         flight.style.setProperty('--flight-x', ((activation.target.col - activation.col) * size) + 'px');
         flight.style.setProperty('--flight-y', ((activation.target.row - activation.row) * size) + 'px');
         this.gridEl.appendChild(flight);
-        setTimeout(() => flight.remove(), 620);
+        setTimeout(() => flight.remove(), FLIGHT_VISUAL_MS + 200);
       } else if (activation.special === 'rainbow') {
         const flash = document.createElement('div');
         flash.className = activation.fullBoard ? 'rainbow-flash all-board' : 'rainbow-flash';
@@ -2659,7 +2699,7 @@ const Board = {
         this.spawnSparkles(pos.row, pos.col, cell.type, particlesPerCell);
       }
     });
-    await delay(CLEAR_MS);
+    await this.waitForEffects(['match-shrink', 'match-flare', 'roots-break', 'ice-break'], CLEAR_MS);
   },
 
   // Мелкие цветные искры, разлетающиеся из точки уничтоженного элемента —
@@ -2757,6 +2797,50 @@ const Board = {
           cell.el.classList.remove('ice-freed');
         }
       }, CLEAR_MS);
+    });
+  },
+
+  // Короткий визуальный мостик от поля к соответствующему чипу цели.
+  // Клон летит поверх интерфейса, поэтому не меняет раскладку и не мешает ходу.
+  animateGoalItems(items) {
+    if (!items.length || typeof document === 'undefined' || !document.body) return;
+    const goals = this.level?.goals || [];
+    const queue = [];
+    items.forEach((item) => {
+      const goal = goals.find(candidate => candidate.type === item.type &&
+        (candidate.type !== 'collect' || candidate.gem === item.gem));
+      if (!goal) return;
+      const chip = document.querySelector(`[data-goal-type="${goal.type}"][data-goal-gem="${goal.gem || ''}"]`);
+      const source = this.grid[item.row]?.[item.col]?.el;
+      if (!chip || !source || typeof source.getBoundingClientRect !== 'function') return;
+      const sourceRect = source.getBoundingClientRect();
+      const target = chip.querySelector('.goal-icon') || chip;
+      const targetRect = target.getBoundingClientRect();
+      // У фруктов изображение задаётся селектором `.gem[data-type] .gem-inner`,
+      // поэтому сохраняем внешний контейнер с data-type, а не только inner.
+      const clone = item.type === 'collect'
+        ? source.cloneNode(true)
+        : target.cloneNode(true);
+      clone.classList.add('goal-flight');
+      clone.removeAttribute('id');
+      clone.style.left = (sourceRect.left + sourceRect.width / 2) + 'px';
+      clone.style.top = (sourceRect.top + sourceRect.height / 2) + 'px';
+      const flightSize = item.type === 'collect'
+        ? Math.min(46, sourceRect.width * 0.95)
+        : 54;
+      clone.style.width = flightSize + 'px';
+      clone.style.height = clone.style.width;
+      if (item.type !== 'collect') clone.style.fontSize = '34px';
+      clone.style.setProperty('--goal-x', (targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2) + 'px');
+      clone.style.setProperty('--goal-y', (targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2) + 'px');
+      document.body.appendChild(clone);
+      chip.classList.add('goal-arrival');
+      setTimeout(() => chip.classList.remove('goal-arrival'), 420 + Math.min(queue.length * 45, 180));
+      queue.push(clone);
+    });
+    queue.forEach((clone, index) => {
+      clone.style.animationDelay = Math.min(index * 85, 340) + 'ms';
+      setTimeout(() => clone.remove(), 1040 + Math.min(index * 85, 340));
     });
   },
   registerClearedGems(countedCells, cascadeLevel) {
@@ -3077,6 +3161,8 @@ const Board = {
     this.level.goals.forEach((goal) => {
       const chip = document.createElement('div');
       chip.className = 'goal-chip';
+      chip.dataset.goalType = goal.type;
+      chip.dataset.goalGem = goal.gem || '';
       if (this.isGoalComplete(goal)) chip.classList.add('done');
       const icon = makeGoalIcon(goal);
       const text = document.createElement('span');
@@ -3462,6 +3548,7 @@ function bindGlobalUI() {
 
 const STARTUP_IMAGES = [
   'assets/backgrounds/menu-bg.jpg',
+  'assets/backgrounds/game-field-bg.png',
   'assets/gems/apple.png', 'assets/gems/corn.png', 'assets/gems/cucumber.png',
   'assets/gems/berry.png', 'assets/gems/eggplant.png',
   'assets/gems/flower-rocket.png', 'assets/gems/pumpkin.png',
