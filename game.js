@@ -27,6 +27,8 @@
 const LANGUAGE_STORAGE_KEY = 'gardenRushLanguage_v1';
 const TEXT = {
   ru: {
+    winterArea: 'Морозный сад', flowers: 'Морозные цветы', goalFlower: 'Вырастить цветы: {amount}', loseFlower: 'Вырастить цветы',
+    flowerHelp: '✿ Собери фрукт прямо в фиолетовой клетке — получишь цветок. Комбинация рядом не считается. Усилитель должен попасть в эту клетку. 🔒 Сначала убери лёд или корни, затем собери фрукт. ✓ Цветок уже собран.',
     welcomeTitle: 'Добро пожаловать в сад!',
     welcomeIntro: 'Давай соберём первый урожай вместе.',
     welcomeMatch: 'Меняй местами соседние фишки: собери 3 или больше одинаковых в ряд по горизонтали или вертикали.',
@@ -71,6 +73,9 @@ const TEXT = {
     goalIceOne: 'Растопить лёд на {amount} фрукте', goalIceMany: 'Растопить лёд на {amount} фруктах',
     roots: 'Корни', ice: 'Лёд',
     introRocket: 'Используй ракеты, чтобы набрать очки быстрее!',
+    tutorialFlowers: 'Сдвинь яблоко по стрелке: комбинация пройдёт через фиолетовую клумбу и соберёт цветок.',
+    tutorialFlowerRoots: 'Сделай ход по стрелке рядом с корнями на клумбе. Два удара уберут корни; затем собери фрукт на клумбе.',
+    tutorialFlowerIce: 'Сделай ход по стрелке через замёрзшие клумбы. Сначала треснет лёд; цветы под ним собираются следующим попаданием.',
     tutorialRocket: 'Обменяй подсвеченные фишки и создай цветочную ракету.',
     tutorialPumpkin: 'Сделай подсвеченный ход и собери L-комбинацию для тыквы.',
     tutorialButterfly: 'Сдвинь фишку в подсвеченный квадрат, чтобы создать бабочку.',
@@ -88,6 +93,8 @@ const TEXT = {
     obstacleRoots: ', оплетён корнями: ещё {hits} удара', obstacleIce: ', заморожен',
   },
   en: {
+    winterArea: 'Frost Garden', flowers: 'Frost flowers', goalFlower: 'Grow {amount} flowers', loseFlower: 'Grow flowers',
+    flowerHelp: '✿ Match the fruit IN a purple flowerbed to collect its flower. Matches nearby do not count. Power-ups must hit the bed. 🔒 Clear ice or roots first, then match the fruit. ✓ Already collected.',
     welcomeTitle: 'Welcome to the garden!',
     welcomeIntro: 'Let’s gather your first harvest together.',
     welcomeMatch: 'Swap neighboring tiles to match 3 or more of the same kind in a horizontal or vertical row.',
@@ -132,6 +139,9 @@ const TEXT = {
     goalIceOne: 'Melt the ice on {amount} fruit', goalIceMany: 'Melt the ice on {amount} fruits',
     roots: 'Roots', ice: 'Ice',
     introRocket: 'Use rockets to score more points!',
+    tutorialFlowers: 'Move the apple along the arrow: the match will cross the purple flowerbed and collect a flower.',
+    tutorialFlowerRoots: 'Follow the arrow to match beside the rooted flowerbed. Two hits remove roots; then match the fruit on the bed.',
+    tutorialFlowerIce: 'Follow the arrow to match through frozen beds. Ice breaks first; flowers underneath need another hit.',
     tutorialRocket: 'Swap the highlighted tiles to create a flower rocket.',
     tutorialPumpkin: 'Make the highlighted move to form an L-shape and create a pumpkin.',
     tutorialButterfly: 'Move the tile into the highlighted square to create a butterfly.',
@@ -199,13 +209,13 @@ const SPARKLE_COLORS = {
   eggplant: '#a24fc4',
 };
 
-const FLOWER_ROCKET_IMAGE = 'assets/gems/flower-rocket.png';
+const FLOWER_ROCKET_IMAGE = 'assets/gems/flower-rocket.png?v=20261020c';
 const SPECIAL_IMAGES = {
   'rocket-row': FLOWER_ROCKET_IMAGE,
   'rocket-col': FLOWER_ROCKET_IMAGE,
-  pumpkin: 'assets/gems/pumpkin.png',
-  butterfly: 'assets/gems/butterfly.png',
-  rainbow: 'assets/gems/rainbow-flower.png',
+  pumpkin: 'assets/gems/pumpkin.png?v=20261020c',
+  butterfly: 'assets/gems/butterfly.png?v=20261020c',
+  rainbow: 'assets/gems/rainbow-flower.png?v=20261020c',
 };
 const SPECIAL_NAMES = {
   'rocket-row': 'цветочная ракета',
@@ -689,6 +699,50 @@ const LEVELS = [
   },
 ];
 
+// Frost Garden: coordinate-bound flowerbeds never move with fruit.
+LEVELS.push(
+  { id: 31, title: 'Уровень 31', theme: 'winter', moves: 22,
+    shape: SHAPES.rounded, flowerbeds: [[3,2],[3,3],[3,4]],
+    goals: [{"type":"flower","amount":3}], obstacles: {},
+    starThresholds: [2000, 4000, 6000] },
+  { id: 32, title: 'Уровень 32', theme: 'winter', moves: 25,
+    shape: SHAPES.diamond, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3]],
+    goals: [{"type":"flower","amount":5}], obstacles: {},
+    starThresholds: [2000, 4350, 6450] },
+  { id: 33, title: 'Уровень 33', theme: 'winter', moves: 28,
+    shape: SHAPES.rounded, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3],[4,4]],
+    goals: [{"type":"flower","amount":6},{"type":"collect","gem":"berry","amount":18}], obstacles: {},
+    starThresholds: [2000, 4700, 6900] },
+  { id: 34, title: 'Уровень 34', theme: 'winter', moves: 30,
+    shape: SHAPES.cross, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3],[4,4],[2,2],[2,5]],
+    goals: [{"type":"flower","amount":8},{"type":"collect","gem":"apple","amount":20}], obstacles: {},
+    starThresholds: [2000, 5050, 7350] },
+  { id: 35, title: 'Уровень 35', theme: 'winter', moves: 30,
+    shape: SHAPES.rounded, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3],[4,4]],
+    goals: [{"type":"flower","amount":6},{"type":"cage","amount":3}], obstacles: {"cages":[[3,2],[2,5],[5,2]]},
+    starThresholds: [2000, 5400, 7800] },
+  { id: 36, title: 'Уровень 36', theme: 'winter', moves: 32,
+    shape: SHAPES.cross, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3],[4,4],[2,2],[2,5]],
+    goals: [{"type":"flower","amount":8},{"type":"cage","amount":4}], obstacles: {"cages":[[3,3],[4,4],[2,2],[5,5]]},
+    starThresholds: [2000, 5750, 8250] },
+  { id: 37, title: 'Уровень 37', theme: 'winter', moves: 32,
+    shape: SHAPES.rounded, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3],[4,4],[2,2],[2,5]],
+    goals: [{"type":"flower","amount":8},{"type":"ice","amount":4}], obstacles: {"ice":[[3,2],[3,4],[4,3],[2,5]]},
+    starThresholds: [2000, 6100, 8700] },
+  { id: 38, title: 'Уровень 38', theme: 'winter', moves: 34,
+    shape: SHAPES.hourglass, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3],[4,4],[2,2],[2,5]],
+    goals: [{"type":"flower","amount":8},{"type":"ice","amount":5}], obstacles: {"ice":[[3,2],[4,4],[2,2],[5,5],[1,3]]},
+    starThresholds: [2000, 6450, 9150] },
+  { id: 39, title: 'Уровень 39', theme: 'winter', moves: 36,
+    shape: SHAPES.cross, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3],[4,4],[2,2],[2,5],[5,2],[5,5]],
+    goals: [{"type":"flower","amount":10},{"type":"ice","amount":4},{"type":"collect","gem":"corn","amount":24}], obstacles: {"ice":[[3,2],[4,4],[2,5],[5,2]]},
+    starThresholds: [2000, 6800, 9600] },
+  { id: 40, title: 'Уровень 40', theme: 'winter', moves: 38,
+    shape: SHAPES.rounded, flowerbeds: [[3,2],[3,3],[3,4],[4,2],[4,3],[4,4],[2,2],[2,5],[5,2],[5,5],[1,3],[6,4]],
+    goals: [{"type":"flower","amount":12},{"type":"cage","amount":3},{"type":"ice","amount":4}], obstacles: {"cages":[[3,3],[2,5],[6,4]],"ice":[[3,2],[4,4],[5,2],[1,3]]},
+    starThresholds: [2000, 7150, 10050] }
+);
+
 // Старые пороги нужны только для восстановления звёзд из сохранений,
 // созданных до появления bestStars. Перебалансировка не отнимает награды.
 const LEGACY_STAR_THRESHOLDS = new Map(LEVELS.map((level) => [level.id, [...level.starThresholds]]));
@@ -709,47 +763,49 @@ LEVELS.forEach((level) => {
 // Для каждого участка карты задаются отдельные координаты ниже.
 
 const MAP_NODE_POSITIONS = [
-  { left: 55.6, top: 91.5 },
-  { left: 69.1, top: 83.0 },
-  { left: 48.4, top: 74.5 },
-  { left: 72.8, top: 62.2 },
-  { left: 62.9, top: 53.9 },
-  { left: 44.0, top: 48.5 },
-  { left: 71.7, top: 37.0 },
-  { left: 45.9, top: 26.4 },
-  { left: 64.9, top: 19.6 },
-  { left: 34.4, top: 14.0 },
+  { left: 54, top: 92 },
+  { left: 48, top: 82 },
+  { left: 43, top: 74 },
+  { left: 73, top: 65 },
+  { left: 61, top: 55 },
+  { left: 50, top: 48 },
+  { left: 70, top: 40 },
+  { left: 48, top: 32 },
+  { left: 63, top: 25 },
+  { left: 37, top: 18 },
 ];
 const MAP_PAGE_NODE_POSITIONS = [
-  { left: 52.76, top: 89.18 }, // 11 — нижняя отметка на ступенях у входа
-  { left: 67.22, top: 74.76 }, // 12 — дорожка после правой лестницы
-  { left: 78.05, top: 68.48 }, // 13 — правая лестница
-  { left: 70.97, top: 59.99 }, // 14 — площадка у моста
-  { left: 44.85, top: 50.18 }, // 15 — нижний левый изгиб тропы
-  { left: 40.75, top: 44.20 }, // 16 — верхний левый изгиб тропы
-  { left: 63.71, top: 38.46 }, // 17 — центральная дорожка
-  { left: 52.34, top: 28.56 }, // 18 — левый поворот наверху
-  { left: 67.22, top: 22.73 }, // 19 — верхняя дорожка
-  { left: 80.82, top: 14.86 }, // 20 — лестница у домика
+  { left: 53, top: 91 },
+  { left: 56, top: 82 },
+  { left: 81, top: 73 },
+  { left: 65, top: 63 },
+  { left: 42, top: 55 },
+  { left: 39, top: 48 },
+  { left: 63, top: 40 },
+  { left: 51, top: 32 },
+  { left: 66, top: 25 },
+  { left: 83, top: 17 },
 ];
 const MAP_PAGE_3_NODE_POSITIONS = [
-  { left: 43.36, top: 88.28 }, // 21 — нижняя тропа у входа
-  { left: 53.24, top: 74.88 }, // 22 — ступени
-  { left: 37.51, top: 66.87 }, // 23 — широкий поворот тропы
-  { left: 27.63, top: 59.75 }, // 24 — ступени у огорода
-  { left: 69.61, top: 41.81 }, // 25 — тропа у ущелья
-  { left: 42.72, top: 38.46 }, // 26 — центральная дорожка
-  { left: 22.74, top: 33.25 }, // 27 — левый поворот
-  { left: 37.62, top: 28.47 }, // 28 — верхняя дорожка
-  { left: 22.42, top: 18.30 }, // 29 — тропа у руин
-  { left: 35.18, top: 13.46 }, // 30 — лестница у каменной арки
+  { left: 43, top: 91 },
+  { left: 51, top: 82 },
+  { left: 50, top: 73 },
+  { left: 31, top: 65 },
+  { left: 64, top: 51 },
+  { left: 50, top: 46 },
+  { left: 25, top: 39 },
+  { left: 32, top: 31 },
+  { left: 24, top: 22 },
+  { left: 36, top: 14 },
 ];
+const WINTER_MAP_POSITIONS = [[51,93],[56,84],[36,76],[51,68],[74,51],[82,43],[70,35],[30,29],[48,23],[27,17]].map(([left,top]) => ({left,top}));
 let currentMapPage = 0;
 
 const MAP_PAGE_BACKGROUNDS = [
   'assets/backgrounds/map-bg.jpg',
   'assets/backgrounds/map-bg-2.jpg',
   'assets/backgrounds/map-bg-3.jpg',
+  'assets/backgrounds/map-winter.jpg',
 ];
 
 function validateGameConfig() {
@@ -762,9 +818,13 @@ function validateGameConfig() {
     if (!Array.isArray(level.shape) || level.shape.length !== BOARD_SIZE || level.shape.some((row) => typeof row !== 'string' || row.length !== BOARD_SIZE || /[^01]/.test(row))) errors.push(`Некорректная форма поля: уровень ${level.id}`);
     if (!Array.isArray(level.starThresholds) || level.starThresholds.length !== 3 || level.starThresholds.some((value, i, arr) => !Number.isFinite(value) || value <= 0 || (i > 0 && value <= arr[i - 1]))) errors.push(`Некорректные пороги звёзд: уровень ${level.id}`);
     if (!Array.isArray(level.goals) || level.goals.length === 0) errors.push(`Нет целей: уровень ${level.id}`);
+    const beds = level.flowerbeds || [];
+    if (new Set(beds.map(([r,c]) => r + '_' + c)).size !== beds.length ||
+        beds.some(([r,c]) => !Number.isInteger(r) || !Number.isInteger(c) || level.shape[r]?.[c] !== '1')) errors.push(`Некорректные клумбы: уровень ${level.id}`);
+    if (level.goals.some(g => g.type === 'flower' && g.amount !== beds.length)) errors.push(`Цель цветов не совпадает с клумбами: уровень ${level.id}`);
     (level.goals || []).forEach((goal) => {
       if (goal.type === 'collect' && !GEM_TYPES[goal.gem]) errors.push(`Неизвестный элемент в цели уровня ${level.id}: ${goal.gem}`);
-      else if (!['collect', 'score', 'cage', 'ice'].includes(goal.type)) errors.push(`Неизвестный тип цели уровня ${level.id}: ${goal.type}`);
+      else if (!['collect', 'score', 'cage', 'ice', 'flower'].includes(goal.type)) errors.push(`Неизвестный тип цели уровня ${level.id}: ${goal.type}`);
       if (!Number.isFinite(goal.amount) || goal.amount <= 0) errors.push(`Некорректное значение цели уровня ${level.id}`);
     });
   });
@@ -803,7 +863,7 @@ const STORAGE_KEY = 'gardenRushSave_v1';
 
 function defaultProgress() {
   return { unlockedLevel: 1, bestScore: {}, bestStars: {}, bestMoves: {}, soundOn: true,
-    endlessRun: null, endlessBestScore: 0, endlessBestStages: 0, lastMapPage: 0, welcomeSeen: false };
+    endlessRun: null, endlessBestScore: 0, endlessBestStages: 0, endlessIntroSeen: false, lastMapPage: 0, welcomeSeen: false };
 }
 
 function loadProgress() {
@@ -812,6 +872,9 @@ function loadProgress() {
     if (!raw) return defaultProgress();
     const parsed = JSON.parse(raw);
     const loaded = Object.assign(defaultProgress(), parsed);
+    // Existing runs/records prove the player has already entered this mode.
+    loaded.endlessIntroSeen = parsed.endlessIntroSeen === true || Boolean(parsed.endlessRun) ||
+      Number(parsed.endlessBestScore) > 0 || Number(parsed.endlessBestStages) > 0;
     // У старых сохранений нет страницы: открываем участок текущего уровня.
     const latestLevel = Math.max(1, Math.min(LEVELS.length, Number(loaded.unlockedLevel) || 1));
     loaded.lastMapPage = normalizeMapPage(Number.isInteger(parsed.lastMapPage)
@@ -970,7 +1033,7 @@ function updateLanguageButtons() {
 }
 
 function tutorialPromptKey(levelId) {
-  return ({ 2: 'tutorialRocket', 4: 'tutorialPumpkin', 6: 'tutorialButterfly', 8: 'tutorialRainbow', 10: 'tutorialCombo', 11: 'tutorialRoots', 15: 'tutorialIce' })[levelId];
+  return ({ 2: 'tutorialRocket', 4: 'tutorialPumpkin', 6: 'tutorialButterfly', 8: 'tutorialRainbow', 10: 'tutorialCombo', 11: 'tutorialRoots', 15: 'tutorialIce', 31: 'tutorialFlowers', 35: 'tutorialFlowerRoots', 37: 'tutorialFlowerIce' })[levelId];
 }
 
 function cellAriaLabel(cell) {
@@ -1115,6 +1178,7 @@ function renderLevelMap() {
   rememberMapPage(currentMapPage);
   const background = MAP_PAGE_BACKGROUNDS[currentMapPage] || MAP_PAGE_BACKGROUNDS[MAP_PAGE_BACKGROUNDS.length - 1];
   $('map-page-label').textContent = t('area', { current: currentMapPage + 1, total: mapPages });
+  container.classList.toggle('winter-map', currentMapPage === 3);
   $('btn-map-prev').disabled = currentMapPage === 0;
   $('btn-map-next').disabled = currentMapPage >= mapPages - 1;
 
@@ -1142,7 +1206,7 @@ function renderLevelMap() {
     const page = Math.floor(index / pageSize);
     if (page !== currentMapPage) return;
     const pageIndex = index % pageSize;
-    const positions = [MAP_NODE_POSITIONS, MAP_PAGE_NODE_POSITIONS, MAP_PAGE_3_NODE_POSITIONS][page] || MAP_PAGE_3_NODE_POSITIONS;
+    const positions = [MAP_NODE_POSITIONS, MAP_PAGE_NODE_POSITIONS, MAP_PAGE_3_NODE_POSITIONS, WINTER_MAP_POSITIONS][page] || MAP_PAGE_3_NODE_POSITIONS;
     const pos = positions[pageIndex];
     const node = document.createElement('button');
     const locked = level.id > progress.unlockedLevel;
@@ -1182,17 +1246,30 @@ function renderLevelMap() {
     endless.type = 'button';
     endless.className = 'level-node endless-node';
     endless.style.left = '87%';
-    endless.style.top = '24.8%';
+    endless.style.top = '28%';
     endless.innerHTML = '<svg class="endless-node-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16 16C12 9 4 9 4 16S12 23 16 16S28 9 28 16S20 23 16 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     endless.setAttribute('aria-label', t('endlessTitle'));
     endless.title = t('endlessTitle');
     endless.addEventListener('click', () => {
       Sound.play('tap');
-      Endless.renderInfo();
-      $('modal-endless-info').classList.remove('hidden');
-      $(Endless.unlocked() ? 'btn-endless-play' : 'btn-endless-close').focus({ preventScroll: true });
+      enterEndlessMode();
     });
     container.appendChild(endless);
+  }
+}
+
+function enterEndlessMode(automatic = false) {
+  if (Endless.unlocked() && progress.endlessIntroSeen) {
+    if (!automatic) Endless.start();
+    return;
+  }
+  Endless.renderInfo();
+  $('modal-endless-info').classList.remove('hidden');
+  $(Endless.unlocked() ? 'btn-endless-play' : 'btn-endless-close').focus({ preventScroll: true });
+  // A locked-mode explanation is not the introduction to an available run.
+  if (Endless.unlocked()) {
+    progress.endlessIntroSeen = true;
+    saveProgress(progress);
   }
 }
 
@@ -1204,6 +1281,7 @@ function closeEndlessInfo() {
 // Человекочитаемое описание цели уровня — используется в экране
 // подтверждения перед стартом уровня.
 function goalDescription(goal) {
+  if (goal.type === 'flower') return t('goalFlower', { amount: goal.amount });
   if (goal.type === 'collect') return t('goalCollect', { amount: goal.amount, items: gemName(goal.gem, goal.amount) });
   if (goal.type === 'score') return t('goalScore', { amount: formatNumber(goal.amount) });
   if (goal.type === 'cage') return t(goal.amount === 1 ? 'goalCageOne' : 'goalCageMany', { amount: goal.amount });
@@ -1237,13 +1315,17 @@ function makeGoalIcon(goal) {
   if (goal.type === 'collect') {
     const img = document.createElement('img');
     img.className = 'goal-icon';
-    img.src = 'assets/gems/' + goal.gem + '.png';
+    img.src = 'assets/gems/' + goal.gem + '.png?v=20261020c';
     img.alt = gemName(goal.gem, 1);
     return img;
   }
   const span = document.createElement('span');
   span.className = 'goal-icon';
-  if (goal.type === 'cage') {
+  if (goal.type === 'flower') {
+    span.textContent = '✿';
+    span.classList.add('goal-flower-icon');
+    span.setAttribute('aria-label', t('flowers'));
+  } else if (goal.type === 'cage') {
     span.classList.add('goal-roots-icon');
     span.textContent = '🌿';
     span.setAttribute('aria-label', t('roots'));
@@ -1485,6 +1567,11 @@ const Board = {
     this.collected = {};
     this.cagesFreed = 0;
     this.iceCleared = 0;
+    this.flowersGrown = 0;
+    this.flowerbeds = new Set((level.flowerbeds || []).map(([r,c]) => r + '_' + c));
+    this.bloomedBeds = new Set();
+    this.flowerEls = [];
+    $('screen-game').classList.toggle('winter-game', level.theme === 'winter');
     this.selected = null;
     this.busy = false;
     this.tutorialMove = null;
@@ -1502,7 +1589,7 @@ const Board = {
     this.gridEl.innerHTML = '';
 
     this.parseShape(level.shape);
-    if ([2, 4, 6, 8, 10, 11, 15].includes(level.id)) this.prepareTutorialMove(level.id);
+    if (tutorialPromptKey(level.id)) this.prepareTutorialMove(level.id);
     else this.generateSolvableBoard();
     this.applyLevelObstacles();
     if (!this.tutorialMove) {
@@ -1582,6 +1669,7 @@ const Board = {
     this.gridEl.style.width = boardSize + 'px';
     this.gridEl.style.height = boardSize + 'px';
     this.cellSize = boardSize / this.size;
+    this.gridEl.style.backgroundSize = this.cellSize + 'px ' + this.cellSize + 'px';
   },
 
   /* ---------- генерация поля ---------- */
@@ -1619,6 +1707,9 @@ const Board = {
       10: { from: [5, 3], to: [5, 4], prompt: t('tutorialCombo'), specials: [[[5, 3], 'rocket-row', 'apple'], [[5, 4], 'pumpkin', 'corn']] },
       11: { from: [2, 4], to: [3, 4], prompt: t('tutorialRoots'), targets: [[2, 3]], cells: [[[2, 3], 'corn'], [[2, 4], 'berry'], [[3, 2], 'berry'], [[3, 3], 'berry'], [[3, 4], 'apple']] },
       15: { from: [2, 4], to: [3, 4], prompt: t('tutorialIce'), targets: [[3, 3]], cells: [[[2, 4], 'berry'], [[3, 2], 'berry'], [[3, 3], 'berry'], [[3, 4], 'apple']] },
+      31: { from: [2, 3], to: [2, 2], prompt: t('tutorialFlowers'), targets: [[3, 2]], cells: [[[1, 2], 'apple'], [[2, 2], 'corn'], [[3, 2], 'apple'], [[2, 3], 'apple']] },
+      35: { from: [1, 3], to: [2, 3], prompt: t('tutorialFlowerRoots'), targets: [[3, 2]], cells: [[[2, 1], 'berry'], [[2, 2], 'berry'], [[2, 3], 'corn'], [[1, 3], 'berry']] },
+      37: { from: [2, 3], to: [3, 3], prompt: t('tutorialFlowerIce'), targets: [[3, 2], [3, 4]], cells: [[[3, 2], 'berry'], [[3, 3], 'corn'], [[3, 4], 'berry'], [[2, 3], 'berry']] },
     };
     const lesson = lessons[levelId];
     if (!lesson) return;
@@ -1730,6 +1821,59 @@ const Board = {
 
   /* ---------- рендер ---------- */
 
+  renderFlowerbeds() {
+    this.flowerEls = [];
+    for (const key of this.flowerbeds || []) {
+      const [row,col] = key.split('_').map(Number);
+      const el = document.createElement('div');
+      el.className = 'flowerbed' + (this.bloomedBeds.has(key) ? ' bloomed' : '');
+      el.textContent = this.bloomedBeds.has(key) ? '✓' : '✿';
+      el.setAttribute('aria-hidden', 'true');
+      this.gridEl.appendChild(el);
+      this.flowerEls.push({el,row,col,key});
+    }
+    this.layoutFlowerbeds();
+    this.updateFlowerbeds();
+  },
+  updateFlowerbeds() {
+    (this.flowerEls || []).forEach(({el,row,col,key}) => {
+      const done = this.bloomedBeds.has(key);
+      const blocked = !done && this.isImmobile(this.grid[row]?.[col]);
+      el.classList.toggle('blocked', blocked);
+      el.textContent = done ? '✓' : blocked ? '🔒' : '✿';
+    });
+  },
+  layoutFlowerbeds() {
+    (this.flowerEls || []).forEach(({el,row,col}) => {
+      el.style.width = this.cellSize + 'px'; el.style.height = this.cellSize + 'px';
+      el.style.transform = 'translate(' + col*this.cellSize + 'px, ' + row*this.cellSize + 'px)';
+    });
+  },
+  growFlowers(positions) {
+    const gathered = [];
+    positions.forEach(({row,col}) => {
+      const key = row + '_' + col;
+      if (!this.flowerbeds?.has(key) || this.bloomedBeds.has(key)) return;
+      this.bloomedBeds.add(key);
+      this.flowersGrown++;
+      gathered.push({type: 'flower', row, col});
+      const bed = this.flowerEls?.find(b => b.key === key);
+      bed?.el.classList.add('bloomed');
+      if (bed) {
+        bed.el.classList.remove('blocked');
+        bed.el.textContent = '✓';
+        const burst = document.createElement('div');
+        burst.className = 'flower-collected';
+        burst.textContent = '+1 ✿';
+        burst.setAttribute('aria-hidden', 'true');
+        burst.style.left = ((col + .5) * this.cellSize) + 'px';
+        burst.style.top = ((row + .5) * this.cellSize) + 'px';
+        this.gridEl.appendChild(burst);
+        setTimeout(() => burst.remove(), 1100);
+      }
+    });
+    return gathered;
+  },
   renderAll() {
     for (let r = 0; r < this.size; r++) {
       for (let c = 0; c < this.size; c++) {
@@ -1809,6 +1953,7 @@ const Board = {
       }
     }
     this.layoutHoles();
+    this.layoutFlowerbeds();
   },
 
   updateTileVisual(cell) {
@@ -1889,6 +2034,7 @@ const Board = {
     // перерисовываем поле заново на новом контейнере
     this.gridEl.innerHTML = '';
     this.renderShapeDecor();
+    this.renderFlowerbeds();
     this.renderAll();
 
     this.gridEl.addEventListener('pointerdown', (e) => this.onPointerDown(e));
@@ -2194,8 +2340,10 @@ const Board = {
       // "КОМБО ×N" для наглядной обратной связи по каскадам.
       if (cascadeLevel >= 2) this.showComboBanner(cascadeLevel);
       await this.playMatchEffects(result, cascadeLevel);
+      const flowers = this.growFlowers(result.countedCells);
       this.registerClearedGems(result.countedCells, cascadeLevel);
       this.renderHud();
+      this.animateGoalItems(flowers);
 
       await this.collapseAndRefill(result.clearSet, result.specialsToCreate);
       await delay(SETTLE_MS);
@@ -3149,6 +3297,7 @@ const Board = {
   /* ---------- HUD ---------- */
 
   renderHud() {
+    this.updateFlowerbeds();
     $('btn-game-help').classList.toggle('hidden', this.level.id !== 1);
     $('hud-level-title').textContent = this.level.mode === 'endless'
       ? t('endlessStage', { stage: this.level.stage }) : levelTitle(this.level.id).toUpperCase();
@@ -3201,6 +3350,7 @@ const Board = {
   },
 
   goalProgressText(goal) {
+    if (goal.type === 'flower') return `${Math.min(this.flowersGrown, goal.amount)}/${goal.amount}`;
     if (this.level.mode === 'endless') {
       const current = goal.type === 'collect' ? this.collected[goal.gem] || 0
         : goal.type === 'cage' ? this.cagesFreed : this.iceCleared;
@@ -3220,6 +3370,7 @@ const Board = {
   },
 
   isGoalComplete(goal) {
+    if (goal.type === 'flower') return this.flowersGrown >= goal.amount;
     if (goal.type === 'collect') return (this.collected[goal.gem] || 0) >= goal.amount;
     if (goal.type === 'score') return this.score >= goal.amount;
     if (goal.type === 'cage') return this.cagesFreed >= goal.amount;
@@ -3376,12 +3527,12 @@ const Board = {
     container.innerHTML = '';
     this.level.goals.filter((goal) => !this.isGoalComplete(goal)).forEach((goal) => {
       const current = goal.type === 'collect' ? (this.collected[goal.gem] || 0)
-        : goal.type === 'cage' ? this.cagesFreed : goal.type === 'ice' ? this.iceCleared : this.score;
+        : goal.type === 'flower' ? this.flowersGrown : goal.type === 'cage' ? this.cagesFreed : goal.type === 'ice' ? this.iceCleared : this.score;
       const row = document.createElement('div');
       row.className = 'lose-goal';
       const label = document.createElement('span');
       label.textContent = goal.type === 'collect' ? t('loseCollect', { item: gemName(goal.gem) })
-        : t({ cage: 'loseRoots', ice: 'loseIce', score: 'loseScore' }[goal.type]);
+        : t({ flower: 'loseFlower', cage: 'loseRoots', ice: 'loseIce', score: 'loseScore' }[goal.type]);
       const amount = document.createElement('strong');
       amount.textContent = formatNumber(Math.max(0, goal.amount - current));
       row.append(makeGoalIcon(goal), label, amount);
@@ -3511,9 +3662,7 @@ function bindGlobalUI() {
     } else {
       currentMapPage = 2;
       goToMap();
-      Endless.renderInfo();
-      $('modal-endless-info').classList.remove('hidden');
-      $('btn-endless-play').focus({ preventScroll: true });
+      enterEndlessMode(true);
     }
   });
 
@@ -3549,10 +3698,10 @@ function bindGlobalUI() {
 const STARTUP_IMAGES = [
   'assets/backgrounds/menu-bg.jpg',
   'assets/backgrounds/game-field-bg.png',
-  'assets/gems/apple.png', 'assets/gems/corn.png', 'assets/gems/cucumber.png',
-  'assets/gems/berry.png', 'assets/gems/eggplant.png',
-  'assets/gems/flower-rocket.png', 'assets/gems/pumpkin.png',
-  'assets/gems/butterfly.png', 'assets/gems/rainbow-flower.png',
+  'assets/gems/apple.png?v=20261020c', 'assets/gems/corn.png?v=20261020c', 'assets/gems/cucumber.png?v=20261020c',
+  'assets/gems/berry.png?v=20261020c', 'assets/gems/eggplant.png?v=20261020c',
+  'assets/gems/flower-rocket.png?v=20261020c', 'assets/gems/pumpkin.png?v=20261020c',
+  'assets/gems/butterfly.png?v=20261020c', 'assets/gems/rainbow-flower.png?v=20261020c',
 ];
 
 function startupImages() {

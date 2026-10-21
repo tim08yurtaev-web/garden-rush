@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Garden Rush</title>
 <meta name="description" content="Garden Rush — весёлая игра «три в ряд» про сад" id="page-description">
-<link rel="preload" as="image" href="assets/backgrounds/loading-bg.png" fetchpriority="high">
+<link rel="preload" as="image" href="assets/backgrounds/menu-bg.jpg" fetchpriority="high">
 <style>
-  body.is-loading { margin: 0; background: #46b9eb; }
+  body.is-loading { margin: 0; background: #a4d4bb; }
   body.is-loading #app { visibility: hidden; }
   body.is-loading .modal-overlay { display: none; }
-  #loading-screen { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #46b9eb; font-family: 'Baloo 2', system-ui, sans-serif; color: #fff; }
-  .loading-landscape { position: absolute; inset: 0; background: url('assets/backgrounds/loading-bg.png') center / cover no-repeat; }
+  #loading-screen { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #a4d4bb; font-family: 'Baloo 2', system-ui, sans-serif; color: #fff; }
+  .loading-landscape { position: absolute; inset: 0; background: url('assets/backgrounds/menu-bg.jpg') center / cover no-repeat; }
   .loading-content { position: relative; width: min(78vw, 350px); text-align: center; margin-top: -12vh; }
   .loading-title { margin: 0 0 32px; font-size: clamp(42px, 10vw, 64px); line-height: .95; font-weight: 900; letter-spacing: 2px; color: #fff1a0; text-shadow: 0 4px 0 #3e752c, 0 7px 12px #23551b55; }
   .loading-title span { display: block; color: #fff; }
@@ -22,11 +22,11 @@
   #loading-percent { display: block; margin-top: 7px; font-size: 14px; font-weight: 800; }
   #loading-retry { margin-top: 12px; border: 0; border-radius: 12px; padding: 12px 24px; background: #548e36; color: #fff; font: 700 16px system-ui; cursor: pointer; }
   #loading-retry[hidden] { display: none; }
-  @media (min-aspect-ratio: 3/4) { .loading-landscape { background-size: auto 100%; background-color: #46b9eb; } }
+  @media (min-aspect-ratio: 3/4) { .loading-landscape { background-size: auto 100%; background-color: #a4d4bb; } }
   @media (prefers-reduced-motion: reduce) { #loading-fill { transition: none; } }
 </style>
 <link rel="preload" href="assets/fonts/baloo-2-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261020c">
 </head>
 <body class="is-loading">
 
@@ -63,7 +63,7 @@
         <span data-i18n="play">Играть</span>
       </button>
 
-      <div class="menu-progress" id="menu-progress">Пройдено уровней: 0 / 30</div>
+      <div class="menu-progress" id="menu-progress">Пройдено уровней: 0 / 40</div>
     </div>
   </section>
 
@@ -79,7 +79,7 @@
     </header>
     <nav class="map-page-switch" aria-label="Переключение участка карты" data-i18n-aria="mapPages">
       <button class="map-page-arrow" id="btn-map-prev" aria-label="Предыдущий участок" title="Предыдущий участок" data-i18n-aria="previousArea" data-i18n-title="previousArea">←</button>
-      <span class="map-page-label" id="map-page-label">Участок 1 из 3</span>
+      <span class="map-page-label" id="map-page-label">Участок 1 из 4</span>
       <button class="map-page-arrow" id="btn-map-next" aria-label="Следующий участок" title="Следующий участок" data-i18n-aria="nextArea" data-i18n-title="nextArea">→</button>
     </nav>
     <div class="map-viewport" id="map-viewport">
@@ -146,9 +146,9 @@
 <div class="modal-overlay hidden" id="modal-welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title" aria-describedby="welcome-intro welcome-rules">
   <div class="modal-card welcome-card">
     <div class="welcome-harvest" aria-hidden="true">
-      <img src="assets/gems/apple.png" alt="">
-      <img src="assets/gems/apple.png" alt="">
-      <img src="assets/gems/apple.png" alt="">
+      <img src="assets/gems/apple.png?v=20261020c" alt="">
+      <img src="assets/gems/apple.png?v=20261020c" alt="">
+      <img src="assets/gems/apple.png?v=20261020c" alt="">
     </div>
     <h3 class="modal-title" id="welcome-title" data-i18n="welcomeTitle">Добро пожаловать в сад!</h3>
     <p class="modal-text" id="welcome-intro" data-i18n="welcomeIntro">Давай соберём первый урожай вместе.</p>
@@ -246,6 +246,6 @@
 
 <script async src="https://cdn.jsdelivr.net/npm/@gemspace/gem-bridge-sdk/index.global.js" onload="if(window.initGemSpaceBridge) window.initGemSpaceBridge()"></script>
 <script src="loader.js"></script>
-<script src="game.js" onerror="window.GardenLoader.showBootError()"></script>
+<script src="game.js?v=20261021" onerror="window.GardenLoader.showBootError()"></script>
 </body>
 </html>
