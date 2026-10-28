@@ -39,7 +39,7 @@ const TEXT = {
     howToPlay: 'Как играть',
     endlessTitle: 'Бесконечный сад',
     endlessRules: 'Начни с 20 ходов. За каждое задание получай +6 ходов. В запасе максимум 30 ходов. Поле и усилители сохраняются, задания постепенно усложняются.',
-    endlessLocked: 'Пройди уровень 30, чтобы открыть бесконечный сад.',
+    endlessLocked: 'Пройди уровень 40, чтобы открыть бесконечный сад.',
     endlessStart: 'Начать забег', endlessResume: 'Продолжить забег',
     endlessStage: '∞ ЗАДАНИЕ {stage}', endlessAdvance: 'Задание выполнено! +{moves} ходов',
     endlessHud: 'Выполнено: {stages} · За задание +{reward} ходов',
@@ -105,7 +105,7 @@ const TEXT = {
     howToPlay: 'How to play',
     endlessTitle: 'Endless Garden',
     endlessRules: 'Start with 20 moves. Every task awards +6 moves. Keep up to 30 moves in reserve. Your board and power-ups stay as tasks get harder.',
-    endlessLocked: 'Complete level 30 to unlock Endless Garden.',
+    endlessLocked: 'Complete level 40 to unlock Endless Garden.',
     endlessStart: 'Start run', endlessResume: 'Continue run',
     endlessStage: '∞ TASK {stage}', endlessAdvance: 'Task complete! +{moves} moves',
     endlessHud: 'Completed: {stages} · +{reward} moves per task',
@@ -1239,14 +1239,14 @@ function renderLevelMap() {
 
     container.appendChild(node);
   });
-  // Правый конец подвесного моста на третьем участке карты.
-  if (currentMapPage === 2) {
+  // Ледяная пещера у финиша зимнего участка ведёт в бесконечный сад.
+  if (currentMapPage === 3) {
     const endless = document.createElement('button');
     endless.id = 'btn-endless-mode';
     endless.type = 'button';
     endless.className = 'level-node endless-node';
-    endless.style.left = '87%';
-    endless.style.top = '28%';
+    endless.style.left = '14%';
+    endless.style.top = '9%';
     endless.innerHTML = '<svg class="endless-node-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16 16C12 9 4 9 4 16S12 23 16 16S28 9 28 16S20 23 16 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     endless.setAttribute('aria-label', t('endlessTitle'));
     endless.title = t('endlessTitle');
@@ -1385,7 +1385,7 @@ function closeLevelInfo() {
 // Бесконечный режим использует тот же движок. Сохраняем только устойчивое
 // поле между ходами: закрытие во время каскада вернёт к началу этого хода.
 const Endless = {
-  unlocked() { return progress.unlockedLevel > 30; },
+  unlocked() { return progress.unlockedLevel > 40; },
   moveReward(stage) { return 6; },
 
   level(stage, board = null) {
@@ -1443,7 +1443,7 @@ const Endless = {
     if (run) level.goals = run.goals.map(goal => ({ ...goal }));
     ['modal-endless-info', 'modal-endless-result', 'modal-win', 'modal-lose', 'modal-level-info']
       .forEach(id => $(id).classList.add('hidden'));
-    rememberMapPage(2);
+    rememberMapPage(3);
     showScreen('screen-game');
     Board.start(level, run);
     this.save();
@@ -3622,7 +3622,7 @@ function bindGlobalUI() {
   $('btn-endless-retry').addEventListener('click', () => Endless.start(false));
   $('btn-endless-map').addEventListener('click', () => {
     $('modal-endless-result').classList.add('hidden');
-    currentMapPage = 2;
+    currentMapPage = 3;
     goToMap();
   });
   $('victory-finale').addEventListener('click', () => Board.finishVictoryFinale());
